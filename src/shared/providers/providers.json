@@ -1,6 +1,10 @@
 {
 	"list": [
 		{
+			"value": "openai",
+			"label": "OpenAI Compatible"
+		},
+		{
 			"value": "shengsuanyun",
 			"label": "胜算云"
 		},
@@ -11,10 +15,6 @@
 		{
 			"value": "gemini",
 			"label": "Google Gemini"
-		},
-		{
-			"value": "openai",
-			"label": "OpenAI Compatible"
 		},
 		{
 			"value": "anthropic",

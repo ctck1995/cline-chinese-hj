@@ -492,7 +492,7 @@ export async function readGlobalStateFromDisk(context: ExtensionContext): Promis
 			apiProvider = planModeApiProvider
 		} else {
 			// New users should default to openrouter, since they've opted to use an API key instead of signing in
-			apiProvider = "shengsuanyun"
+			apiProvider = "openai"
 		}
 
 		const mcpResponsesCollapsed = mcpResponsesCollapsedRaw ?? false

@@ -2,6 +2,7 @@ import type { ModelInfo as ModelInfoType } from "@shared/api"
 import { ANTHROPIC_MAX_THINKING_BUDGET, ANTHROPIC_MIN_THINKING_BUDGET, ApiProvider } from "@shared/api"
 import { StringRequest } from "@shared/proto/cline/common"
 import { UpdateSettingsRequest } from "@shared/proto/cline/state"
+import { OpenAiModelsRequest } from "@shared/proto/cline/models"
 import { Mode } from "@shared/storage/types"
 import { ArrowLeftRight, Brain, Check, ChevronDownIcon, Search, Settings } from "lucide-react"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
@@ -143,7 +144,7 @@ import {
 import { useApiConfigurationHandlers } from "@/components/settings/utils/useApiConfigurationHandlers"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import { StateServiceClient } from "@/services/grpc-client"
+import { StateServiceClient, ModelsServiceClient } from "@/services/grpc-client"
 import { getConfiguredProviders, getProviderLabel } from "@/utils/getConfiguredProviders"
 
 interface ModelPickerModalProps {
@@ -206,6 +207,10 @@ const ModelPickerModal: React.FC<ModelPickerModalProps> = ({ isOpen, onOpenChang
 	const [isProviderExpanded, setIsProviderExpanded] = useState(false)
 	const [providerDropdownPosition, setProviderDropdownPosition] = useState({ top: 0, left: 0, width: 0, maxHeight: 200 })
 	const [selectedIndex, setSelectedIndex] = useState(-1) // For keyboard navigation
+	const [isFetchingOpenAiModels, setIsFetchingOpenAiModels] = useState(false)
+	const [fetchedOpenAiModels, setFetchedOpenAiModels] = useState<string[]>([])
+	const [showOpenAiModelDropdown, setShowOpenAiModelDropdown] = useState(false)
+	const [fetchOpenAiError, setFetchOpenAiError] = useState<string | null>(null)
 	const searchInputRef = useRef<HTMLInputElement>(null)
 	const triggerRef = useRef<HTMLDivElement>(null)
 	const modalRef = useRef<HTMLDivElement>(null)
@@ -522,10 +527,14 @@ const ModelPickerModal: React.FC<ModelPickerModalProps> = ({ isOpen, onOpenChang
 		if (isOpen) {
 			setIsProviderExpanded(false)
 			setSelectedIndex(-1)
+			setShowOpenAiModelDropdown(false)
+			setFetchOpenAiError(null)
 			setTimeout(() => searchInputRef.current?.focus(), 100)
 		} else {
 			setSearchQuery("")
 			setSelectedIndex(-1)
+			setShowOpenAiModelDropdown(false)
+			setFetchOpenAiError(null)
 		}
 	}, [isOpen])
 
@@ -616,7 +625,7 @@ const ModelPickerModal: React.FC<ModelPickerModalProps> = ({ isOpen, onOpenChang
 					<PopupModalContainer
 						$arrowPosition={arrowPosition}
 						$bottomOffset={5}
-						$maxHeight="18em"
+						$maxHeight="calc(100vh - 100px)"
 						$menuPosition={menuPosition}
 						ref={modalRef}>
 						{/* Search */}
@@ -867,12 +876,94 @@ const ModelPickerModal: React.FC<ModelPickerModalProps> = ({ isOpen, onOpenChang
 											<SettingsOnlyContainer>
 												{/* Show configured model if exists */}
 												{providerInfo.modelId && (
-													<ConfiguredModelRow>
-														<ConfiguredModelLabel>
-															{t("settings.apiConfig.currentModel")}
-														</ConfiguredModelLabel>
-														<ConfiguredModelName>{providerInfo.modelId}</ConfiguredModelName>
-													</ConfiguredModelRow>
+													<>
+														<ConfiguredModelRow>
+															<ConfiguredModelLabel>
+																{t("settings.apiConfig.currentModel")}
+															</ConfiguredModelLabel>
+															<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+																<ConfiguredModelName>{providerInfo.modelId}</ConfiguredModelName>
+																{selectedProvider === "openai" && (
+																	<span 
+																		style={{ cursor: "pointer", color: "var(--vscode-textLink-foreground)", fontSize: "11px" }}
+																		onClick={async (e) => {
+																			e.stopPropagation()
+																			if (showOpenAiModelDropdown) {
+																				setShowOpenAiModelDropdown(false)
+																				return
+																			}
+																			setIsFetchingOpenAiModels(true)
+																			setFetchOpenAiError(null)
+																			try {
+																				const response = await ModelsServiceClient.refreshOpenAiModels(
+																					OpenAiModelsRequest.create({
+																						baseUrl: apiConfiguration?.openAiBaseUrl || "",
+																						apiKey: apiConfiguration?.openAiApiKey || "",
+																					}),
+																				)
+																				if (response && response.values && response.values.length > 0) {
+																					setFetchedOpenAiModels(response.values)
+																					setShowOpenAiModelDropdown(true)
+																				} else {
+																					setFetchOpenAiError("获取失败或该接口不支持")
+																				}
+																			} catch (error) {
+																				console.error(error)
+																				setFetchOpenAiError("获取模型失败，请检查配置")
+																			} finally {
+																				setIsFetchingOpenAiModels(false)
+																			}
+																		}}
+																	>
+																		{isFetchingOpenAiModels ? "获取中..." : (showOpenAiModelDropdown ? "取消" : "切换")}
+																	</span>
+																)}
+															</div>
+														</ConfiguredModelRow>
+														{fetchOpenAiError && (
+															<div style={{ color: "var(--vscode-errorForeground)", fontSize: "11px", padding: "4px 10px" }}>
+																{fetchOpenAiError}
+															</div>
+														)}
+														{showOpenAiModelDropdown && (
+															<div style={{ 
+																display: "flex", 
+																flexDirection: "column", 
+																maxHeight: "150px", 
+																overflowY: "auto",
+																border: "1px solid var(--vscode-editorGroup-border)",
+																marginTop: "4px",
+																borderRadius: "3px"
+															}}>
+																{fetchedOpenAiModels.map(modelId => (
+																	<div
+																		key={modelId}
+																		style={{
+																			padding: "6px 10px",
+																			cursor: "pointer",
+																			fontSize: "12px",
+																			backgroundColor: modelId === providerInfo.modelId ? "var(--vscode-list-activeSelectionBackground)" : "transparent",
+																			color: modelId === providerInfo.modelId ? "var(--vscode-list-activeSelectionForeground)" : "var(--vscode-foreground)"
+																		}}
+																		onClick={(e) => {
+																			e.stopPropagation()
+																			const modeToUse = isSplit ? activeEditMode : currentMode
+																			handleModeFieldChange({ plan: "planModeOpenAiModelId", act: "actModeOpenAiModelId" }, modelId, modeToUse)
+																			setShowOpenAiModelDropdown(false)
+																		}}
+																		onMouseEnter={(e) => {
+																			e.currentTarget.style.backgroundColor = modelId === providerInfo.modelId ? "var(--vscode-list-activeSelectionBackground)" : "var(--vscode-list-hoverBackground)"
+																		}}
+																		onMouseLeave={(e) => {
+																			e.currentTarget.style.backgroundColor = modelId === providerInfo.modelId ? "var(--vscode-list-activeSelectionBackground)" : "transparent"
+																		}}
+																	>
+																		{modelId}
+																	</div>
+																))}
+															</div>
+														)}
+													</>
 												)}
 												{/* Show base URL if configured */}
 												{providerInfo.baseUrl && (

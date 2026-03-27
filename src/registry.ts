@@ -1,6 +1,6 @@
 import { name, publisher, version } from "../package.json"
 
-const prefix = "cline-chinese"
+const prefix = "cline-chinese-hj"
 
 /**
  * List of commands with the name of the extension they are registered under.
@@ -32,7 +32,7 @@ const ClineCommands = {
  * These should match the name + view IDs defined in package.json.
  */
 const ClineViewIds = {
-	Sidebar: "cline-chinese.SidebarProvider",
+	Sidebar: "cline-chinese-hj.SidebarProvider",
 }
 
 /**

@@ -170,7 +170,7 @@ export function normalizeApiConfiguration(
 	liteLlmModels?: Record<string, ModelInfo>,
 ): NormalizedApiConfig {
 	const provider =
-		(currentMode === "plan" ? apiConfiguration?.planModeApiProvider : apiConfiguration?.actModeApiProvider) || "shengsuanyun"
+		(currentMode === "plan" ? apiConfiguration?.planModeApiProvider : apiConfiguration?.actModeApiProvider) || "openai"
 
 	const modelId = currentMode === "plan" ? apiConfiguration?.planModeApiModelId : apiConfiguration?.actModeApiModelId
 

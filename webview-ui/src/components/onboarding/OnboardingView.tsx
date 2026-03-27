@@ -341,8 +341,8 @@ const OnboardingView = ({ onboardingModels }: { onboardingModels: OnboardingMode
 					actModeOpenRouterModelId: selectedModelId,
 					planModeOpenRouterModelInfo: openRouterModels[selectedModelId],
 					actModeOpenRouterModelInfo: openRouterModels[selectedModelId],
-					planModeApiProvider: "shengsuanyun",
-					actModeApiProvider: "shengsuanyun",
+					planModeApiProvider: "openai",
+					actModeApiProvider: "openai",
 				})
 			}
 			hideAccount()

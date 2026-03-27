@@ -15,13 +15,11 @@ export const STEP_CONFIG = {
 		description: "onboarding.userType.description",
 		buttons: [
 			{ text: "onboarding.button.continue", action: "next", variant: "default" },
-			{ text: "onboarding.button.login", action: "signin", variant: "secondary" },
 		],
 	},
 	[NEW_USER_TYPE.POWER]: {
 		title: "onboarding.step.power.title",
 		buttons: [
-			{ text: "onboarding.button.createAccount", action: "signup", variant: "default" },
 			{ text: "onboarding.button.back", action: "back", variant: "secondary" },
 		],
 	},
