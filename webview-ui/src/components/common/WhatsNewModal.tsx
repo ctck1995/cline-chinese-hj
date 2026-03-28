@@ -65,9 +65,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ open, onClose, ver
 		userInfo ? (
 			<div className="flex gap-2 flex-wrap">{children}</div>
 		) : (
-			<Button className="my-1" onClick={handleShowAccount} size="sm">
-				Cline Chinese赞助商--胜算云中使用
-			</Button>
+			null
 		)
 
 	return (

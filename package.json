@@ -280,11 +280,6 @@
 					"when": "view == cline-chinese-hj.SidebarProvider"
 				},
 				{
-					"command": "cline-chinese-hj.accountButtonClicked",
-					"group": "navigation@5",
-					"when": "view == cline-chinese-hj.SidebarProvider"
-				},
-				{
 					"command": "cline-chinese-hj.settingsButtonClicked",
 					"group": "navigation@6",
 					"when": "view == cline-chinese-hj.SidebarProvider"
